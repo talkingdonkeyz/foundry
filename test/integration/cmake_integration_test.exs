@@ -11,7 +11,6 @@ defmodule Foundry.Integration.CMakeTest do
     on_exit(fn ->
       IntegrationHelpers.cleanup_build(test_id)
       cleanup_priv()
-      cleanup_cmake_build()
     end)
 
     {:ok, test_id: test_id}
@@ -26,7 +25,8 @@ defmodule Foundry.Integration.CMakeTest do
           otp_app: :foundry,
           builder: :cmake,
           binaries: ["cmake_hello"],
-          source_path: fixture_path
+          source_path: fixture_path,
+          builder_opts: [build_dir: build_dir(test_id)]
         )
 
       assert config.platform_supported? == true
@@ -44,7 +44,8 @@ defmodule Foundry.Integration.CMakeTest do
         otp_app: :foundry,
         builder: :cmake,
         binaries: ["cmake_hello"],
-        source_path: fixture_path
+        source_path: fixture_path,
+        builder_opts: [build_dir: build_dir(test_id)]
       )
 
       priv_path = priv_binary_path("cmake_hello")
@@ -63,7 +64,8 @@ defmodule Foundry.Integration.CMakeTest do
           otp_app: :foundry,
           builder: :cmake,
           binaries: ["cmake_hello"],
-          source_path: fixture_path
+          source_path: fixture_path,
+          builder_opts: [build_dir: build_dir(test_id)]
         )
 
       # Should have registered CMakeLists.txt and .c files
@@ -73,13 +75,15 @@ defmodule Foundry.Integration.CMakeTest do
 
     test "recompiles when source file changes", %{test_id: test_id} do
       fixture_path = IntegrationHelpers.setup_fixture("cmake_hello", test_id)
+      build_dir = build_dir(test_id)
 
       # Initial compile
       Foundry.Compiler.compile(:foundry, [],
         otp_app: :foundry,
         builder: :cmake,
         binaries: ["cmake_hello"],
-        source_path: fixture_path
+        source_path: fixture_path,
+        builder_opts: [build_dir: build_dir]
       )
 
       priv_path = priv_binary_path("cmake_hello")
@@ -105,7 +109,8 @@ defmodule Foundry.Integration.CMakeTest do
         otp_app: :foundry,
         builder: :cmake,
         binaries: ["cmake_hello"],
-        source_path: fixture_path
+        source_path: fixture_path,
+        builder_opts: [build_dir: build_dir]
       )
 
       # Verify binary was rebuilt
@@ -126,7 +131,8 @@ defmodule Foundry.Integration.CMakeTest do
           builder: :cmake,
           binaries: ["cmake_hello"],
           source_path: fixture_path,
-          profile: "release"
+          profile: "release",
+          builder_opts: [build_dir: build_dir(test_id)]
         )
 
       assert config.profile == "release"
@@ -148,7 +154,7 @@ defmodule Foundry.Integration.CMakeTest do
           builder: :cmake,
           binaries: ["cmake_hello"],
           source_path: fixture_path,
-          builder_opts: [args: ["-DCMAKE_VERBOSE_MAKEFILE=ON"]]
+          builder_opts: [build_dir: build_dir(test_id), args: ["-DCMAKE_VERBOSE_MAKEFILE=ON"]]
         )
 
       assert config.platform_supported? == true
@@ -159,6 +165,10 @@ defmodule Foundry.Integration.CMakeTest do
   end
 
   # Helpers
+
+  defp build_dir(test_id) do
+    Path.join([System.tmp_dir!(), "foundry_test", test_id, "build"])
+  end
 
   defp priv_binary_path(name) do
     extension = if match?({:win32, _}, :os.type()), do: ".exe", else: ""
@@ -176,10 +186,5 @@ defmodule Foundry.Integration.CMakeTest do
         File.rm(Path.join(priv_dir, file))
       end)
     end
-  end
-
-  defp cleanup_cmake_build do
-    build_dir = Path.join([Mix.Project.build_path(), "native", "foundry", "build"])
-    File.rm_rf(build_dir)
   end
 end

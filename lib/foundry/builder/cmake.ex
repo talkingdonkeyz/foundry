@@ -6,6 +6,7 @@ defmodule Foundry.Builder.CMake do
 
   - `:target` - CMake target name to build (defaults to first binary name)
   - `:args` - Extra CMake arguments (e.g., `["-DENABLE_FEATURE=ON"]`)
+  - `:build_dir` - Custom CMake build directory (default: `_build/<env>/native/<app>/build`)
   """
 
   @behaviour Foundry.Builder
@@ -19,9 +20,11 @@ defmodule Foundry.Builder.CMake do
   def validate_opts!(opts) do
     target = Keyword.get(opts, :target)
     args = Keyword.get(opts, :args, [])
+    build_dir = Keyword.get(opts, :build_dir)
 
     validate_target!(target)
     validate_args!(args)
+    validate_build_dir!(build_dir)
 
     :ok
   end
@@ -39,6 +42,13 @@ defmodule Foundry.Builder.CMake do
     Mix.raise("Invalid :args option: #{inspect(other)}. Expected a list of strings")
   end
 
+  defp validate_build_dir!(nil), do: :ok
+  defp validate_build_dir!(dir) when is_binary(dir), do: :ok
+
+  defp validate_build_dir!(other) do
+    Mix.raise("Invalid :build_dir option: #{inspect(other)}. Expected a string")
+  end
+
   @impl true
   @spec build!(String.t(), String.t(), keyword()) :: :ok | no_return()
   def build!(source_path, profile, opts) do
@@ -48,7 +58,7 @@ defmodule Foundry.Builder.CMake do
     env = Keyword.get(opts, :env, [])
     otp_app = Keyword.fetch!(opts, :otp_app)
 
-    build_dir = cmake_build_dir(otp_app)
+    build_dir = resolve_build_dir(opts, otp_app)
     File.mkdir_p!(build_dir)
 
     cmake_configure!(source_path, build_dir, profile, args, env)
@@ -61,7 +71,7 @@ defmodule Foundry.Builder.CMake do
         }
   def binary_paths(_source_path, binaries, _profile, opts) do
     otp_app = Keyword.fetch!(opts, :otp_app)
-    build_dir = cmake_build_dir(otp_app)
+    build_dir = resolve_build_dir(opts, otp_app)
     extension = exe_extension()
 
     Map.new(binaries, fn name ->
@@ -114,13 +124,17 @@ defmodule Foundry.Builder.CMake do
     run_cmd!("cmake", args, env)
   end
 
-  defp cmake_build_dir(otp_app) do
+  defp default_build_dir(otp_app) do
     Path.join([
       Mix.Project.build_path(),
       "native",
       to_string(otp_app),
       "build"
     ])
+  end
+
+  defp resolve_build_dir(opts, otp_app) do
+    Keyword.get(opts, :build_dir) || default_build_dir(otp_app)
   end
 
   defp find_cmake_output(build_dir, binary_name) do

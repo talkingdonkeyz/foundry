@@ -136,6 +136,7 @@ Pass these in `builder_opts` when using `builder: :cmake`:
 |--------|------|---------|-------------|
 | `:target` | `String.t()` | First binary | CMake target name to build |
 | `:args` | `[String.t()]` | `[]` | Extra CMake arguments |
+| `:build_dir` | `String.t()` | `_build/<env>/native/<app>/build` | CMake build directory |
 
 ### Custom Builders
 
