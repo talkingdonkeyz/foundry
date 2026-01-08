@@ -1,0 +1,9 @@
+[package]
+name = "rust_hello"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "rust_hello"
+path = "src/main.rs"
+
