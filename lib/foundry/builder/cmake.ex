@@ -56,7 +56,9 @@ defmodule Foundry.Builder.CMake do
   end
 
   @impl true
-  @spec binary_paths(String.t(), [String.t()], String.t(), keyword()) :: %{String.t() => String.t()}
+  @spec binary_paths(String.t(), [String.t()], String.t(), keyword()) :: %{
+          String.t() => String.t()
+        }
   def binary_paths(_source_path, binaries, _profile, opts) do
     otp_app = Keyword.fetch!(opts, :otp_app)
     build_dir = cmake_build_dir(otp_app)

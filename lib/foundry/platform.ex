@@ -113,7 +113,8 @@ defmodule Foundry.Platform do
       iex> Foundry.Platform.constraints_description([:linux, :macos], nil)
       "linux,macos/any"
   """
-  @spec constraints_description(os_list :: [os()] | nil, arch_list :: [arch()] | nil) :: String.t()
+  @spec constraints_description(os_list :: [os()] | nil, arch_list :: [arch()] | nil) ::
+          String.t()
   def constraints_description(os_list, arch_list) do
     os_str = if os_list, do: Enum.join(os_list, ","), else: "any"
     arch_str = if arch_list, do: Enum.join(arch_list, ","), else: "any"

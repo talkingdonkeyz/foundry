@@ -110,7 +110,9 @@ defmodule Foundry.Compiler do
 
   defp merge_opt({:otp_app, value}, config) when is_atom(value), do: %{config | otp_app: value}
   defp merge_opt({:builder, value}, config) when is_atom(value), do: %{config | builder: value}
-  defp merge_opt({:source_path, value}, config) when is_binary(value), do: %{config | source_path: value}
+
+  defp merge_opt({:source_path, value}, config) when is_binary(value),
+    do: %{config | source_path: value}
 
   defp merge_opt({:binaries, value}, config) when is_list(value) do
     %{config | binaries: Enum.map(value, &to_string/1)}
@@ -118,14 +120,21 @@ defmodule Foundry.Compiler do
 
   defp merge_opt({:profile, value}, config) when is_binary(value), do: %{config | profile: value}
   defp merge_opt({:env, value}, config) when is_list(value), do: %{config | env: value}
-  defp merge_opt({:skip_compilation?, value}, config) when is_boolean(value), do: %{config | skip_compilation?: value}
-  defp merge_opt({:builder_opts, value}, config) when is_list(value), do: %{config | builder_opts: value}
+
+  defp merge_opt({:skip_compilation?, value}, config) when is_boolean(value),
+    do: %{config | skip_compilation?: value}
+
+  defp merge_opt({:builder_opts, value}, config) when is_list(value),
+    do: %{config | builder_opts: value}
+
   defp merge_opt({:os, value}, config) when is_list(value), do: %{config | os: value}
   defp merge_opt({:arch, value}, config) when is_list(value), do: %{config | arch: value}
   defp merge_opt(_, config), do: config
 
   defp ensure_required!(%__MODULE__{otp_app: nil}), do: Mix.raise("Foundry requires :otp_app")
-  defp ensure_required!(%__MODULE__{builder: nil}), do: Mix.raise("Foundry requires :builder option")
+
+  defp ensure_required!(%__MODULE__{builder: nil}),
+    do: Mix.raise("Foundry requires :builder option")
 
   defp ensure_required!(%__MODULE__{binaries: []}) do
     Mix.raise("Foundry requires :binaries option with at least one binary")

@@ -82,7 +82,9 @@ defmodule Foundry.Builder.Cargo do
   end
 
   @impl true
-  @spec binary_paths(String.t(), [String.t()], String.t(), keyword()) :: %{String.t() => String.t()}
+  @spec binary_paths(String.t(), [String.t()], String.t(), keyword()) :: %{
+          String.t() => String.t()
+        }
   def binary_paths(_source_path, binaries, profile, opts) do
     target = Keyword.get(opts, :target)
     otp_app = Keyword.fetch!(opts, :otp_app)

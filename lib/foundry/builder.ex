@@ -24,7 +24,9 @@ defmodule Foundry.Builder do
   @callback build!(source_path(), profile(), opts()) :: :ok | no_return()
 
   @doc "Returns a map of binary names to their built output paths"
-  @callback binary_paths(source_path(), binaries(), profile(), opts()) :: %{String.t() => String.t()}
+  @callback binary_paths(source_path(), binaries(), profile(), opts()) :: %{
+              String.t() => String.t()
+            }
 
   @doc "Returns list of source files to watch for recompilation"
   @callback discover_resources(source_path()) :: [String.t()]
