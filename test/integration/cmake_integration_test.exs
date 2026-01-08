@@ -87,7 +87,10 @@ defmodule Foundry.Integration.CMakeTest do
       )
 
       priv_path = priv_binary_path("cmake_hello")
-      initial_mtime = File.stat!(priv_path).mtime
+
+      # Verify initial output
+      {initial_output, 0} = System.cmd(priv_path, [], stderr_to_stdout: true)
+      assert String.trim(initial_output) == "hello from cmake"
 
       # Modify source file
       main_c = Path.join([fixture_path, "src", "main.c"])
@@ -101,8 +104,8 @@ defmodule Foundry.Integration.CMakeTest do
       }
       """)
 
-      # Small delay to ensure mtime difference
-      Process.sleep(1000)
+      # Touch with future timestamp to ensure build system sees the change
+      File.touch!(main_c, System.os_time(:second) + 2)
 
       # Recompile
       Foundry.Compiler.compile(:foundry, [],
@@ -113,13 +116,9 @@ defmodule Foundry.Integration.CMakeTest do
         builder_opts: [build_dir: build_dir]
       )
 
-      # Verify binary was rebuilt
-      new_mtime = File.stat!(priv_path).mtime
-      assert new_mtime > initial_mtime, "Binary should have been rebuilt"
-
-      # Verify new output
-      {output, 0} = System.cmd(priv_path, [], stderr_to_stdout: true)
-      assert String.trim(output) == "hello from cmake modified"
+      # Verify output changed (proves rebuild happened)
+      {new_output, 0} = System.cmd(priv_path, [], stderr_to_stdout: true)
+      assert String.trim(new_output) == "hello from cmake modified"
     end
 
     test "supports release profile", %{test_id: test_id} do

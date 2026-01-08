@@ -87,7 +87,9 @@ defmodule Foundry.Integration.CargoTest do
       )
 
       priv_path = priv_binary_path("rust_hello")
-      initial_mtime = File.stat!(priv_path).mtime
+
+      {initial_output, 0} = System.cmd(priv_path, [], stderr_to_stdout: true)
+      assert String.trim(initial_output) == "hello from rust"
 
       # Modify source file
       main_rs = Path.join([fixture_path, "src", "main.rs"])
@@ -98,8 +100,8 @@ defmodule Foundry.Integration.CargoTest do
       }
       """)
 
-      # Small delay to ensure mtime difference
-      Process.sleep(1000)
+      # Touch with future timestamp to ensure build system sees the change
+      File.touch!(main_rs, System.os_time(:second) + 2)
 
       # Recompile
       Foundry.Compiler.compile(:foundry, [],
@@ -110,13 +112,9 @@ defmodule Foundry.Integration.CargoTest do
         builder_opts: [target_dir: target_dir]
       )
 
-      # Verify binary was rebuilt
-      new_mtime = File.stat!(priv_path).mtime
-      assert new_mtime > initial_mtime, "Binary should have been rebuilt"
-
-      # Verify new output
-      {output, 0} = System.cmd(priv_path, [], stderr_to_stdout: true)
-      assert String.trim(output) == "hello from rust modified"
+      # Verify output changed (proves rebuild happened)
+      {new_output, 0} = System.cmd(priv_path, [], stderr_to_stdout: true)
+      assert String.trim(new_output) == "hello from rust modified"
     end
 
     test "supports release profile", %{test_id: test_id} do
