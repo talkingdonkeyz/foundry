@@ -2,7 +2,7 @@ defmodule Foundry.MixProject do
   use Mix.Project
 
   @version "0.1.0"
-  @source_url "https://github.com/takingdonkeyz/foundry"
+  @source_url "https://github.com/talkingdonkeyz/foundry"
 
   def project do
     [
