@@ -3,15 +3,17 @@
 [![Hex.pm](https://img.shields.io/hexpm/v/foundry.svg)](https://hex.pm/packages/foundry)
 [![Docs](https://img.shields.io/badge/hex-docs-blue.svg)](https://hexdocs.pm/foundry)
 
-**Automatically build native executables (Rust/C++) during `mix compile`.**
+**Native executables that feel like Elixir modules.**
 
-Foundry compiles native code and copies the resulting binaries into your app's `priv/` directory—perfect for spawning as Erlang Ports. Think of it as [Rustler](https://github.com/rusterlium/rustler) but for standalone executables instead of NIFs.
+Foundry makes working with native code (Rust, C/C++) just as ergonomic as writing Elixir. Just add `use Foundry` to a module, and it handles the build, tracks source changes for automatic recompilation, and generates path helper functions—all during `mix compile`.
+
+Perfect for spawning external tools as Erlang Ports, whether you're wrapping a Rust CLI, a C++ image processor, or any standalone executable. No Rust experience required—if you can add a dependency, you can use Foundry.
 
 ## Features
 
 - 🦀 **Cargo support** — Build Rust projects
 - 🔧 **CMake support** — Build C/C++ projects  
-- ♻️ **Incremental rebuilds** — Only rebuilds when source files change
+- ♻️ **Smart recompilation** — Tracks source files and only rebuilds when they change (not on every `mix compile`)
 - 📍 **Path helpers** — Generated functions to locate your binaries
 - 🔌 **Zero configuration** — Sensible defaults, just add `use Foundry`
 
@@ -319,13 +321,22 @@ MyApp.Native.tool_c_path()
 
 ## Comparison with Other Tools
 
-| Tool | Use Case | Produces |
-|------|----------|----------|
-| **Foundry** | Build standalone executables to spawn as Ports | Executables in `priv/` |
-| [Rustler](https://github.com/rusterlium/rustler) | Rust NIFs | `.so`/`.dll` loaded into BEAM |
-| [Zigler](https://github.com/ityonemo/zigler) | Zig NIFs | `.so`/`.dll` loaded into BEAM |
-| [elixir_make](https://github.com/elixir-lang/elixir_make) | Run `make` during compile | Anything (manual) |
-| [bundlex](https://github.com/membraneframework/bundlex) | Membrane's native tooling | NIFs |
+| Tool | Use Case | Languages | Tracks Source Changes | Path Helpers | Config Required |
+|------|----------|-----------|----------------------|--------------|-----------------|
+| **Foundry** | Standalone executables as Ports | Rust, C/C++, extensible | ✅ | ✅ Generated functions | Minimal—just `use Foundry` |
+| [Rustler](https://github.com/rusterlium/rustler) | Rust NIFs (in-process) | Rust only | ✅ | ✅ | Minimal |
+| [elixir_make](https://github.com/elixir-lang/elixir_make) | Run `make` during compile | Any (manual) | ❌ | ❌ | Manual Makefile + hooks |
+| [bundlex](https://github.com/membraneframework/bundlex) | Membrane framework NIFs | C/C++ | ❌ | ✅ | Moderate |
+
+## Why Foundry?
+
+If you need to spawn executables as Ports (not NIFs), Foundry gives you Rustler-level DX:
+
+- **Rebuilds only when needed** — Foundry tracks your native source files (`.rs`, `.c`, `Cargo.toml`, etc.) and only triggers a rebuild when they change. No wasted time on every `mix compile`.
+- **Generated path helpers** — Get type-safe functions to locate your binaries at runtime. No manual path concatenation.
+- **Zero-config defaults** — Just `use Foundry`. No Makefiles, no manual dependency tracking, no custom Mix tasks.
+
+Unlike `elixir_make`, you don't write scripts to track dependencies or find compiled binaries. Unlike always-rebuilding tools, you don't wait for unnecessary recompilation.
 
 ## License
 
