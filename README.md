@@ -2,6 +2,7 @@
 
 [![Hex.pm](https://img.shields.io/hexpm/v/foundry.svg)](https://hex.pm/packages/foundry)
 [![Docs](https://img.shields.io/badge/hex-docs-blue.svg)](https://hexdocs.pm/foundry)
+[![CI](https://github.com/talkingdonkeyz/foundry/actions/workflows/ci.yml/badge.svg)](https://github.com/talkingdonkeyz/foundry/actions/workflows/ci.yml)
 
 **Native executables that feel like Elixir modules.**
 
@@ -12,7 +13,7 @@ Perfect for spawning external tools as Erlang Ports, whether you're wrapping a R
 ## Features
 
 - 🦀 **Cargo support** — Build Rust projects
-- 🔧 **CMake support** — Build C/C++ projects  
+- 🔧 **CMake support** — Build C/C++ projects
 - ♻️ **Smart recompilation** — Tracks source files and only rebuilds when they change (not on every `mix compile`)
 - 📍 **Path helpers** — Generated functions to locate your binaries
 - 🔌 **Zero configuration** — Sensible defaults, just add `use Foundry`
@@ -93,7 +94,7 @@ The typical use case is spawning the binary as an Erlang Port:
 defmodule MyApp.Runner do
   def start do
     exe = MyApp.Native.my_binary_path()
-    
+
     Port.open({:spawn_executable, exe}, [
       :binary,
       :exit_status,
@@ -107,36 +108,36 @@ end
 
 ### Common Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `:otp_app` | `atom` | *required* | Your application name |
-| `:builder` | `atom` | *required* | Build system (`:cargo`, `:cmake`, or custom module) |
-| `:binaries` | `[String.t()]` | *required* | List of binary names to copy |
-| `:source_path` | `String.t()` | `"native"` (cargo) / `"c_src"` (cmake) | Path to native source |
-| `:profile` | `String.t()` | Based on `MIX_ENV` | Build profile (any string) |
-| `:skip_compilation?` | `boolean` | `false` | Skip build, only copy |
-| `:env` | `[{String.t(), String.t()}]` | `[]` | Environment variables for build |
-| `:builder_opts` | `keyword()` | `[]` | Builder-specific options (see below) |
+| Option               | Type                         | Default                                | Description                                         |
+| -------------------- | ---------------------------- | -------------------------------------- | --------------------------------------------------- |
+| `:otp_app`           | `atom`                       | _required_                             | Your application name                               |
+| `:builder`           | `atom`                       | _required_                             | Build system (`:cargo`, `:cmake`, or custom module) |
+| `:binaries`          | `[String.t()]`               | _required_                             | List of binary names to copy                        |
+| `:source_path`       | `String.t()`                 | `"native"` (cargo) / `"c_src"` (cmake) | Path to native source                               |
+| `:profile`           | `String.t()`                 | Based on `MIX_ENV`                     | Build profile (any string)                          |
+| `:skip_compilation?` | `boolean`                    | `false`                                | Skip build, only copy                               |
+| `:env`               | `[{String.t(), String.t()}]` | `[]`                                   | Environment variables for build                     |
+| `:builder_opts`      | `keyword()`                  | `[]`                                   | Builder-specific options (see below)                |
 
 ### Cargo Builder Options
 
 Pass these in `builder_opts` when using `builder: :cargo`:
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `:target` | `String.t()` | `nil` | Rust target triple (cross-compile) |
-| `:cargo` | `:system \| {:bin, path}` | `:system` | Cargo binary to use |
-| `:target_dir` | `String.t()` | `_build/<env>/native/<app>/target` | Cargo output directory |
+| Option        | Type                      | Default                            | Description                        |
+| ------------- | ------------------------- | ---------------------------------- | ---------------------------------- |
+| `:target`     | `String.t()`              | `nil`                              | Rust target triple (cross-compile) |
+| `:cargo`      | `:system \| {:bin, path}` | `:system`                          | Cargo binary to use                |
+| `:target_dir` | `String.t()`              | `_build/<env>/native/<app>/target` | Cargo output directory             |
 
 ### CMake Builder Options
 
 Pass these in `builder_opts` when using `builder: :cmake`:
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `:target` | `String.t()` | First binary | CMake target name to build |
-| `:args` | `[String.t()]` | `[]` | Extra CMake arguments |
-| `:build_dir` | `String.t()` | `_build/<env>/native/<app>/build` | CMake build directory |
+| Option       | Type           | Default                           | Description                |
+| ------------ | -------------- | --------------------------------- | -------------------------- |
+| `:target`    | `String.t()`   | First binary                      | CMake target name to build |
+| `:args`      | `[String.t()]` | `[]`                              | Extra CMake arguments      |
+| `:build_dir` | `String.t()`   | `_build/<env>/native/<app>/build` | CMake build directory      |
 
 ### Custom Builders
 
@@ -200,10 +201,12 @@ When you `use Foundry`, the macro:
 Foundry watches your source files:
 
 **Cargo projects:**
+
 - `Cargo.toml`, `Cargo.lock`
 - All `*.rs` files (excluding `target/`)
 
 **CMake projects:**
+
 - `CMakeLists.txt`, `CMakePresets.json`
 - All `src/**/*.{c,cpp,h,hpp}` files
 
@@ -322,12 +325,12 @@ MyApp.Native.tool_c_path()
 
 ## Comparison with Other Tools
 
-| Tool | Use Case | Languages | Tracks Source Changes | Path Helpers | Config Required |
-|------|----------|-----------|----------------------|--------------|-----------------|
-| **Foundry** | Standalone executables as Ports | Rust, C/C++, extensible | ✅ | ✅ Generated functions | Minimal—just `use Foundry` |
-| [Rustler](https://github.com/rusterlium/rustler) | Rust NIFs (in-process) | Rust only | ✅ | ✅ | Minimal |
-| [elixir_make](https://github.com/elixir-lang/elixir_make) | Run `make` during compile | Any (manual) | ❌ | ❌ | Manual Makefile + hooks |
-| [bundlex](https://github.com/membraneframework/bundlex) | Membrane framework NIFs | C/C++ | ❌ | ✅ | Moderate |
+| Tool                                                      | Use Case                        | Languages               | Tracks Source Changes | Path Helpers           | Config Required            |
+| --------------------------------------------------------- | ------------------------------- | ----------------------- | --------------------- | ---------------------- | -------------------------- |
+| **Foundry**                                               | Standalone executables as Ports | Rust, C/C++, extensible | ✅                    | ✅ Generated functions | Minimal—just `use Foundry` |
+| [Rustler](https://github.com/rusterlium/rustler)          | Rust NIFs (in-process)          | Rust only               | ✅                    | ✅                     | Minimal                    |
+| [elixir_make](https://github.com/elixir-lang/elixir_make) | Run `make` during compile       | Any (manual)            | ❌                    | ❌                     | Manual Makefile + hooks    |
+| [bundlex](https://github.com/membraneframework/bundlex)   | Membrane framework NIFs         | C/C++                   | ❌                    | ✅                     | Moderate                   |
 
 ## Why Foundry?
 
@@ -342,4 +345,3 @@ Unlike `elixir_make`, you don't write scripts to track dependencies or find comp
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
-
