@@ -104,8 +104,13 @@ defmodule Foundry.Integration.CMakeTest do
       }
       """)
 
-      # Touch with future timestamp to ensure build system sees the change
-      File.touch!(main_c, System.os_time(:second) + 2)
+      now = System.os_time(:second)
+      # 1. Touch source with future timestamp so .o recompilation happens
+      File.touch!(main_c, now + 2)
+      build_binary = Path.join(build_dir, "cmake_hello")
+      # 2. Make the executable "old" so relinking will happen after new .o is built
+      File.touch!(build_binary, now - 10)
+      # This mimics real usage where time passes between builds
 
       # Recompile
       Foundry.Compiler.compile(:foundry, [],
