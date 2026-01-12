@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, win22, macos-latest]
+        os: [ubuntu-latest, win25, macos-latest]
         elixir: ["1.16"]
         otp: ["26"]
         include:
@@ -64,4 +64,3 @@ jobs:
 
       - name: Compile with warnings as errors
         run: mix compile --warnings-as-errors
-
