@@ -72,12 +72,43 @@ defmodule Mix.Tasks.Foundry.Test do
   end
 
   defp discover_foundry_modules do
+    # Load all application modules first
+    load_all_application_modules()
+
     # Get all modules that use Foundry
     for {mod, _beam_file} <- :code.all_loaded(),
         Code.ensure_loaded?(mod),
         function_exported?(mod, :__foundry_config__, 0) do
       {mod, mod.__foundry_config__()}
     end
+  end
+
+  defp load_all_application_modules do
+    # Get all apps in the project (umbrella support)
+    apps = Mix.Project.apps_paths() || %{Mix.Project.config()[:app] => "."}
+
+    Enum.each(apps, fn {app, _path} ->
+      # Ensure the application is loaded
+      Application.load(app)
+
+      # Get the application's beam directory
+      app_path = Mix.Project.build_path() |> Path.join("lib/#{app}/ebin")
+
+      if File.dir?(app_path) do
+        # Load all beam files
+        app_path
+        |> Path.join("*.beam")
+        |> Path.wildcard()
+        |> Enum.each(fn beam_file ->
+          module =
+            beam_file
+            |> Path.basename(".beam")
+            |> String.to_atom()
+
+          Code.ensure_loaded(module)
+        end)
+      end
+    end)
   end
 
   defp run_tests(module, config, test_args, opts) do
