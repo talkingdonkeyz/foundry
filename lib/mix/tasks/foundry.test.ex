@@ -116,6 +116,8 @@ defmodule Mix.Tasks.Foundry.Test do
     Mix.shell().info("Running native tests for #{inspect(module)}...")
 
     builder_mod = Foundry.Builder.get!(config.builder)
+    # Ensure builder module is loaded
+    Code.ensure_loaded!(builder_mod)
 
     if Foundry.Builder.supports_test?(builder_mod) do
       builder_opts =
