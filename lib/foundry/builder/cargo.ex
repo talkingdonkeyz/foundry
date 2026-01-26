@@ -131,6 +131,39 @@ defmodule Foundry.Builder.Cargo do
     cargo_files ++ member_cargo ++ rust_sources
   end
 
+  @impl true
+  @spec supports_test?() :: boolean()
+  def supports_test?, do: true
+
+  @impl true
+  @spec test!(String.t(), keyword()) :: Foundry.Builder.test_result()
+  def test!(source_path, opts) do
+    cargo = Keyword.get(opts, :cargo, :system)
+    target = Keyword.get(opts, :target)
+    env = Keyword.get(opts, :env, [])
+    otp_app = Keyword.fetch!(opts, :otp_app)
+    target_dir = resolve_target_dir(opts, otp_app)
+    test_args = Keyword.get(opts, :test_args, [])
+
+    args =
+      ["test"]
+      |> maybe_append(not is_nil(target), ["--target", target])
+      |> Kernel.++(test_args)
+
+    cmd = cargo_bin(cargo)
+    cmd_env = cargo_env(target_dir, env)
+
+    Mix.shell().info("Running #{cmd} #{Enum.join(args, " ")} in #{source_path}")
+
+    case System.cmd(cmd, args, cd: source_path, env: cmd_env, stderr_to_stdout: true) do
+      {output, 0} ->
+        %{status: :ok, exit_code: 0, output: output}
+
+      {output, status} ->
+        %{status: :error, exit_code: status, output: output}
+    end
+  end
+
   # Private helpers
 
   defp cargo_bin(:system), do: "cargo"

@@ -24,3 +24,8 @@ foundry-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Test fixture build artifacts
+/test/fixtures/*/target/
+/test/fixtures/*/build/
+/test/fixtures/*/Cargo.lock

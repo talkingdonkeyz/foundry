@@ -96,7 +96,114 @@ defmodule Foundry.Builder.CMake do
       |> Path.join("src/**/*.{c,cc,cpp,cxx,h,hpp}")
       |> Path.wildcard()
 
-    cmake_files ++ source_files
+    test_files =
+      source_path
+      |> Path.join("test/**/*.{c,cc,cpp,cxx,h,hpp}")
+      |> Path.wildcard()
+
+    cmake_files ++ source_files ++ test_files
+  end
+
+  @impl true
+  @spec supports_test?() :: boolean()
+  def supports_test?, do: true
+
+  @impl true
+  @spec test!(String.t(), keyword()) :: Foundry.Builder.test_result()
+  def test!(source_path, opts) do
+    env = Keyword.get(opts, :env, [])
+    otp_app = Keyword.fetch!(opts, :otp_app)
+    test_args = Keyword.get(opts, :test_args, [])
+    cmake_test_args = Keyword.get(opts, :cmake_test_args, [])
+
+    # Use a separate build directory for tests
+    test_build_dir = resolve_test_build_dir(opts, otp_app)
+    File.mkdir_p!(test_build_dir)
+
+    # Configure with BUILD_TESTING=ON
+    configure_result = cmake_test_configure!(source_path, test_build_dir, cmake_test_args, env)
+
+    case configure_result do
+      {:error, output, status} ->
+        %{status: :error, exit_code: status, output: output}
+
+      :ok ->
+        # Build the test target
+        build_result = cmake_test_build!(test_build_dir, env)
+
+        case build_result do
+          {:error, output, status} ->
+            %{status: :error, exit_code: status, output: output}
+
+          :ok ->
+            # Run ctest
+            run_ctest!(test_build_dir, test_args, env)
+        end
+    end
+  end
+
+  defp cmake_test_configure!(source_path, build_dir, extra_args, env) do
+    args =
+      [
+        "-S", source_path,
+        "-B", build_dir,
+        "-DBUILD_TESTING=ON"
+      ] ++ Enum.map(extra_args, &to_string/1)
+
+    Mix.shell().info("Running cmake #{Enum.join(args, " ")}")
+
+    case System.cmd("cmake", args, env: env, stderr_to_stdout: true) do
+      {_output, 0} -> :ok
+      {output, status} -> {:error, output, status}
+    end
+  end
+
+  defp cmake_test_build!(build_dir, env) do
+    args = ["--build", build_dir]
+
+    Mix.shell().info("Running cmake #{Enum.join(args, " ")}")
+
+    case System.cmd("cmake", args, env: env, stderr_to_stdout: true) do
+      {_output, 0} -> :ok
+      {output, status} -> {:error, output, status}
+    end
+  end
+
+  defp run_ctest!(build_dir, test_args, env) do
+    # Find test subdirectory if it exists
+    test_dir =
+      if File.dir?(Path.join(build_dir, "test")) do
+        Path.join(build_dir, "test")
+      else
+        build_dir
+      end
+
+    args =
+      ["--test-dir", test_dir, "--output-on-failure"]
+      |> Kernel.++(test_args)
+
+    Mix.shell().info("Running ctest #{Enum.join(args, " ")}")
+
+    case System.cmd("ctest", args, env: env, stderr_to_stdout: true) do
+      {output, 0} ->
+        %{status: :ok, exit_code: 0, output: output}
+
+      {output, status} ->
+        %{status: :error, exit_code: status, output: output}
+    end
+  end
+
+  defp resolve_test_build_dir(opts, otp_app) do
+    Keyword.get(opts, :test_build_dir) || default_test_build_dir(otp_app)
+  end
+
+  defp default_test_build_dir(otp_app) do
+    Path.join([
+      Mix.Project.build_path(),
+      "native",
+      to_string(otp_app),
+      "build_test"
+    ])
   end
 
   # Private helpers

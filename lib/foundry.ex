@@ -64,6 +64,7 @@ defmodule Foundry do
       @foundry_platform_supported config.platform_supported?
       @foundry_os config.os
       @foundry_arch config.arch
+      @foundry_config config
       @before_compile Foundry
     end
   end
@@ -74,11 +75,43 @@ defmodule Foundry do
     platform_supported? = Module.get_attribute(env.module, :foundry_platform_supported)
     os = Module.get_attribute(env.module, :foundry_os)
     arch = Module.get_attribute(env.module, :foundry_arch)
+    config = Module.get_attribute(env.module, :foundry_config)
 
-    if platform_supported? do
-      generate_supported_functions(otp_app, binaries, os, arch)
-    else
-      generate_unsupported_functions(binaries, os, arch)
+    config_func = generate_config_function(config)
+
+    platform_funcs =
+      if platform_supported? do
+        generate_supported_functions(otp_app, binaries, os, arch)
+      else
+        generate_unsupported_functions(binaries, os, arch)
+      end
+
+    quote do
+      unquote(config_func)
+      unquote(platform_funcs)
+    end
+  end
+
+  defp generate_config_function(config) do
+    # Convert struct to map for serialization
+    config_map = %{
+      otp_app: config.otp_app,
+      builder: config.builder,
+      source_path: config.source_path,
+      binaries: config.binaries,
+      profile: config.profile,
+      env: config.env,
+      builder_opts: config.builder_opts,
+      os: config.os,
+      arch: config.arch,
+      platform_supported?: config.platform_supported?
+    }
+
+    quote do
+      @doc false
+      def __foundry_config__ do
+        unquote(Macro.escape(config_map))
+      end
     end
   end
 
